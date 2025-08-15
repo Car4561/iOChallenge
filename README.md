@@ -1,6 +1,6 @@
 # iOChallenge (React Native)
 
-Proyecto que incluye un listado de tarjetas (`CardsDashboard`) y un **Secure View** para visualizar los datos de las tarjetas, implementa medidas de seguridad:  
+Proyecto React Native con SecureCardView en iOS que incluye un listado de tarjetas (`CardsDashboard`) y un **Secure View** para visualizar los datos de las tarjetas, implementa medidas de seguridad:  
 - **Blur** automático cuando la app pasa a background, regresa a la normalidad al volver la app a primer plano.  
 - **Campos sensibles ocultos en iOS** durante **capturas de pantalla** o **grabación de pantalla** (por tal motivo en el video adjuntado no se visualizan).
 
