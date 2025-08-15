@@ -1,97 +1,170 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# iOChallenge (React Native)
 
-# Getting Started
+Proyecto que incluye un listado de tarjetas (`CardsDashboard`) y un **Secure View** para visualizar los datos de las tarjetas, implementa medidas de seguridad:  
+- **Blur** automático cuando la app pasa a background, regresa a la normalidad al volver la app a primer plano.  
+- **Campos sensibles ocultos en iOS** durante **capturas de pantalla** o **grabación de pantalla** (por tal motivo en el video adjuntado no se visualizan).
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## Requisitos
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+- **macOS** con **Xcode 16+**
+- **Node.js** 18+.
+- **npm** o **yarn**.
+- **CocoaPods**
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+---
 
-```sh
-# Using npm
-npm start
+## Instalación
 
-# OR using Yarn
-yarn start
+1) **Instalar dependencias JS**  
+```bash
+npm install
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
-npm run android
-
-# OR using Yarn
-yarn android
+2) **Instalar Pods (iOS)**  
+```bash
+cd ios
+pod install
+cd ..
 ```
 
-### iOS
+---
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+## Ejecutar en iOS
+### Terminal 
+```bash
 npm run ios
+```
+> Este comando ejecutará la aplicación en el simulador por default
 
-# OR using Yarn
-yarn ios
+**Elegir un simulador específico**
+
+Lista simuladores:
+```bash
+xcrun simctl list devices
+```
+los marcados en **(Booted)** son los simuladores ejecutandose
+
+Ejecutar en uno en particular (ejemplo **iPhone 16 Pro**):
+```bash
+npx react-native run-ios --simulator="iPhone 16 Pro"
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+**Ejecutar en dispositivo físico**
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+Solo en dispositivo físico se puede probar el bloqueo de datos sensibles al grabar o tomar capturas de pantalla
 
-## Step 3: Modify your app
+```bash
+npx react-native run-ios --device "Nombre del dispositivo"
+```
 
-Now that you have successfully run the app, let's make changes!
+### Xcode
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+- Abrir `ios/iOChallenge.xcworkspace` en Xcode.  
+- Elegir ya sea simulador o dispositivo físico 
+- Ejecuta (`Run` / ⌘R).
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+---
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+## Scripts útiles
 
-## Congratulations! :tada:
+`package.json`:
+```json
+  "scripts": {
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "lint": "eslint .",
+    "start": "react-native start",
+    "test": "jest",
+    "ios:16pro": "react-native run-ios --simulator='iPhone 16 Pro'"
+  },
+```
 
-You've successfully run and modified your React Native App. :partying_face:
+Uso:
+```bash
+npm run ios:16pro
+```
 
-### Now what?
+---
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## Estructura y Arquitectura
 
-# Troubleshooting
+```
+src/
+  capabilities/
+    products/                     #  BIAN - Products como capability
+      cards/                      # Vertical Slice (BIAN) — toda la lógica de Cards en un único módulo 
+        domain/                   # Hexagonal: Núcleo de dominio
+          entities/
+            Card.ts      
+        application/               # Hexagonal: Casos de uso, lógica del dominio
+          ports/                   # Interface Principio de Inversión de Dependencias (SOLID)
+            CardRepositoryPort.ts  # Interfaz de repositorio
+          useCases/
+            ListCardsUseCase.ts.  # Ejecución de repositorio
+        infrastructure/           # Hexagonal: implementaciones de puertos
+          HttpCardRepository.ts   # Repositorio Remoto HTTP
+        ui/                       # Capa de presentación (React Native) — hooks, pantallas, componentes
+          screens/
+            CardsDashboard.tsx    # Scren del listado de tarjetas con FlatList optimizada, estados loading/error y acción para abrir screen Nativo 
+          components/
+            CardItem.tsx          # Item de card
+          hooks/
+            useListCards.ts       # Hook que obtiene tarjetas del servidor
+            useSecureCardFlow.ts  # Hook Generación de token + integración con puente nativo (eventos, estados)
+shared/
+  CardSecureModule.ts             # Bridge RN y iOS (NativeEventEmitter)
+  CardSecureModulePort.ts         # Tipos de eventos
+  security/secureToken.ts         # Generación y validación de token
+```
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+- **Arquitectura Hexagonal:** separación clara en **dominio** (lógica pura), **aplicación** (casos de uso/puertos) y **adaptadores** (infraestructura/UI).
+- **Clean Architecture + SOLID:** capas independientes, dependencias abstractas, files con responsabilidad única
+- **Vertical Slicing (BIAN):** cada *capability* (`Products/Cards`) agrupa sus capas dentro de un mismo módulo, evitando un monolito de carpetas por capa global.
+- **React Native:** hooks (`useCallback`, `useMemo`), listas optimizadas (`FlatList`), separación de UI y lógica.
+- **Performance & Accesibilidad:** render mínimo, uso de `React.memo`.
+- **Seguridad (nativo):** blur en background, ocultar datos sensibles en capturas, timeout con cierre automático.
 
-# Learn More
+---
 
-To learn more about React Native, take a look at the following resources:
+## Seguridad & Privacidad
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- **Blur en background**: cuando la app pasa a segundo plano (applicationWillResignActive), se coloca un **UIVisualEffectView (blur)** sobre el rootView principal, al regresar a la app (applicationDidBecomeActive) se remueve este blur.
+- **Ocultar campos sensibles en capturas/grabación**: Usando la funcionalidad de los UITextField se logró proteger los campos sensibles de las capturas y grabaciones de pantalla  .  
+  **Nota**: Por este motivo, en el video adjuntado no se ven esos datos sensibles (comportamiento esperado).
+
+---
+
+## Tests
+
+Se usan **Jest** + **react-test-renderer**  
+Cobertura actual:
+- Estado **loading** (spinner visible).
+- Estado **error** + acción **Reintentar**.
+- Render de lista y **tap** en una tarjeta (invoca `secure.open(cardId)`).
+
+Ejecutar:
+```bash
+npx jest __tests__/CardsDashboard.test.tsx 
+```
+
+> Los tests envuelven render/interacciones en `act(...)`
+
+---
+
+
+## Notas
+
+
+- Si hay problemas con Pods:  
+  ```bash
+  cd ios
+  pod repo update
+  pod install
+  cd ..
+  ```
+
+---
+
+#
