@@ -1,0 +1,12 @@
+{
+  "images" : [
+    {
+      "filename" : "logo-io-oscuro.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
